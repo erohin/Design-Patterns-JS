@@ -246,6 +246,45 @@ Num.prototype.interpret = function() {
 module.exports = [Num, Min, Sum];
 
 ```
+##### interpreter_es6.js
+```Javascript
+class Sum {
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    interpret() {
+        return this.left.interpret() + this.right.interpret();
+    }
+}
+
+class Min {
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+
+    interpret() {
+        return this.left.interpret() - this.right.interpret();
+    }
+}
+
+
+class Num {
+    constructor(val) {
+        this.val = val;
+    }
+
+    interpret() {
+        return this.val;
+    }
+}
+
+
+module.exports = [Num, Min, Sum];
+
+```
 
 ### Iterator
 ##### iterator.js
@@ -292,24 +331,54 @@ module.exports = Iterator;
 ##### mediator.js
 ```Javascript
 function TrafficTower() {
-    this.airPlanes = [];
+    this.airplanes = [];
 }
 
 TrafficTower.prototype.requestPositions = function() {
-    return this.airPlanes.map(function(airPlane) {
-        return airPlane.position;
+    return this.airplanes.map(function(airplane) {
+        return airplane.position;
     });
 };
 
 function Airplane(position, trafficTower) {
     this.position = position;
     this.trafficTower = trafficTower;
-    this.trafficTower.airPlanes.push(this);
+    this.trafficTower.airplanes.push(this);
 }
 
 Airplane.prototype.requestPositions = function() {
     return this.trafficTower.requestPositions();
 };
+
+module.exports = [TrafficTower, Airplane];
+
+```
+##### mediator_es6.js
+```Javascript
+class TrafficTower {
+    constructor() {
+        this.airplanes = [];
+    }
+
+    requestPositions() {
+        return this.airplanes.map(airplane => {
+            return airplane.position;
+        });
+    }
+}
+
+class Airplane{
+    constructor(position, trafficTower) {
+        this.position = position;
+        this.trafficTower = trafficTower;
+        this.trafficTower.airplanes.push(this);
+    }
+
+    requestPositions() {
+        return this.trafficTower.requestPositions();
+    }
+}
+
 
 module.exports = [TrafficTower, Airplane];
 
@@ -343,7 +412,43 @@ Caretaker.prototype.getMemento = function(index) {
     return this.values[index];
 };
 
-module.exports = [Memento, originator, Caretaker];
+module.exports = [originator, Caretaker];
+
+```
+##### memento_es6.js
+```Javascript
+class Memento {
+    constructor(value) {
+        this.value = value;
+    }
+}
+
+var originator = {
+    store: function(val) {
+        return new Memento(val);
+    },
+    restore: function(memento) {
+        return memento.value;
+    }
+};
+
+class Caretaker {
+    constructor() {
+        this.values = [];
+    }
+
+    addMemento(memento) {
+        this.values.push(memento);
+    }
+
+    getMemento(index) {
+        return this.values[index];
+    }
+}
+
+
+
+module.exports = [originator, Caretaker];
 
 ```
 
@@ -441,7 +546,7 @@ module.exports = [Product, fees, proft];
 ##### state.js
 ```Javascript
 function Order() {
-    this.state = new WaintingForPayment();
+    this.state = new WaitingForPayment();
 
     this.nextState = function() {
         this.state = this.state.next();
@@ -449,7 +554,7 @@ function Order() {
 }
 
 
-function WaintingForPayment() {
+function WaitingForPayment() {
     this.name = 'waitingForPayment';
     this.next = function() {
         return new Shipping();
@@ -467,6 +572,51 @@ function Delivered() {
     this.name = 'delivered';
     this.next = function() {
         return this;
+    };
+}
+
+module.exports = Order;
+
+```
+##### state_es6.js
+```Javascript
+class OrderStatus {
+    constructor(name, nextStatus) {
+        this.name = name;
+        this.nextStatus = nextStatus;
+    }
+
+    next() {
+        return new this.nextStatus();
+    }
+}
+
+class WaitingForPayment extends OrderStatus {
+    constructor() {
+        super('waitingForPayment', Shipping);
+    }
+}
+
+class Shipping extends OrderStatus {
+    constructor() {
+        super('shipping', Delivered);
+    }
+}
+
+
+class Delivered extends OrderStatus {
+    constructor() {
+        super('delivered', Delivered);
+    }
+}
+
+class Order {
+    constructor() {
+        this.state = new WaitingForPayment();
+    }
+
+    nextState() {
+        this.state = this.state.next();
     };
 }
 
@@ -574,76 +724,111 @@ Tax2.prototype.overThousand = function(value) {
 module.exports = [Tax1, Tax2];
 
 ```
+##### template_es6.js
+```Javascript
+class Tax {
+    calc(value) {
+        if (value >= 1000)
+            value = this.overThousand(value);
+
+        return this.complementaryFee(value);
+    }
+
+    complementaryFee(value) {
+        return value + 10;
+    }
+
+}
+
+class Tax1 extends Tax {
+    constructor() {
+        super();
+    }
+    overThousand(value) {
+        return value * 1.1;
+    }
+}
+
+class Tax2 extends Tax {
+    constructor() {
+        super();
+    }
+    overThousand(value) {
+        return value * 1.2;
+    }
+}
+
+module.exports = [Tax1, Tax2];
+
+```
 
 ### Visitor
 ##### visitor.js
 ```Javascript
-function Operation() {}
+function bonusVisitor(employee) {
+    if (employee instanceof Manager)
+        employee.bonus = employee.salary * 2;
+    if (employee instanceof Developer)
+        employee.bonus = employee.salary;
+}
 
-Operation.prototype.accept = function(visitor) {
-    return visitor.visit(this);
+function Employee() {
+    this.bonus = 0;
+}
+
+Employee.prototype.accept = function(visitor) {
+    visitor(this);
 };
 
-function Sum() {
-    this.val = " + ";
+function Manager(salary) {
+    this.salary = salary;
 }
-Sum.prototype = Object.create(Operation.prototype);
 
-function Min() {
-    this.val = " - ";
+Manager.prototype = Object.create(Employee.prototype);
+
+function Developer(salary) {
+    this.salary = salary;
 }
-Min.prototype = Object.create(Operation.prototype);
 
-function Num(val) {
-    this.val = val;
-}
-Num.prototype = Object.create(Operation.prototype);
+Developer.prototype = Object.create(Employee.prototype);
 
 
-function Printer() {}
-Printer.prototype.visit = function(operation) {
-    return operation.val;
-};
-
-module.exports = [Sum, Min, Num, Printer];
+module.exports = [Developer, Manager, bonusVisitor];
 
 ```
 ##### visitor_es6.js
 ```Javascript
-class Operation {
+function bonusVisitor(employee) {
+    if (employee instanceof Manager)
+        employee.bonus = employee.salary * 2;
+    if (employee instanceof Developer)
+        employee.bonus = employee.salary;
+}
+
+class Employee {
+    constructor(salary) {
+        this.bonus = 0;
+        this.salary = salary;
+    }
+
     accept(visitor) {
-        return visitor.visit(this);
+        visitor(this);
     }
 }
 
-class Sum extends Operation {
-    constructor() {
-        super();
-        this.val = " + ";
+class Manager extends Employee {
+    constructor(salary) {
+        super(salary);
     }
 }
 
-class Min extends Operation {
-    constructor() {
-        super();
-        this.val = " - ";
+class Developer extends Employee {
+    constructor(salary) {
+        super(salary);
     }
 }
 
-class Num extends Operation {
-    constructor(val) {
-        super();
-        this.val = val;
-    }
-}
-
-class Printer {
-    visit(operation) {
-        return operation.val;
-    }
-}
-
-module.exports = [Sum, Min, Num, Printer];
+module.exports = [Developer, Manager, bonusVisitor];
 
 ```
 
@@ -847,6 +1032,22 @@ Sheep.prototype.clone = function() {
 module.exports = Sheep;
 
 ```
+##### prototype_es6.js
+```Javascript
+class Sheep {
+    constructor(name, weight) {
+        this.name = name;
+        this.weight = weight;
+    }
+
+    clone() {
+        return new Sheep(this.name, this.weight);
+    }
+}
+
+module.exports = Sheep;
+
+```
 
 ### Singleton
 ##### singleton.js
@@ -859,6 +1060,21 @@ function Person() {
     Person.instance = this;
 
     return this;
+}
+
+module.exports = Person;
+
+```
+##### singleton_es6.js
+```Javascript
+class Person {
+    constructor() {
+        if (typeof Person.instance === 'object') {
+            return Person.instance;
+        }
+        Person.instance = this;
+        return this;
+    }
 }
 
 module.exports = Person;
@@ -893,6 +1109,41 @@ function JediAdapter(jedi) {
 JediAdapter.prototype.attack = function() {
     return this.jedi.attackWithSaber();
 };
+
+module.exports = [Soldier, Jedi, JediAdapter];
+
+```
+##### adapter_es6.js
+```Javascript
+class Soldier {
+    constructor(level) {
+        this.level = level;
+    }
+
+    attack() {
+        return this.level * 1;
+    }
+}
+
+class Jedi {
+    constructor(level) {
+        this.level = level;
+    }
+
+    attackWithSaber() {
+        return this.level * 100;
+    }
+}
+
+class JediAdapter {
+    constructor(jedi) {
+        this.jedi = jedi;
+    }
+
+    attack() {
+        return this.jedi.attackWithSaber();
+    }
+}
 
 module.exports = [Soldier, Jedi, JediAdapter];
 
@@ -984,17 +1235,17 @@ module.exports = [EpsonPrinter, HPprinter, AcrylicInk, AlcoholInk];
 ```Javascript
 // composition
 function EquipmentComposition(name) {
-    this.equipaments = [];
+    this.equipments = [];
     this.name = name;
 }
 
-EquipmentComposition.prototype.add = function(Equipament) {
-    this.equipaments.push(Equipament);
+EquipmentComposition.prototype.add = function(equipment) {
+    this.equipments.push(equipment);
 };
 
 EquipmentComposition.prototype.getPrice = function() {
-    return this.equipaments.map(function(Equipament){
-        return Equipament.getPrice();
+    return this.equipments.map(function(equipment){
+        return equipment.getPrice();
     }).reduce(function(a, b) {
         return  a + b;
     });
@@ -1042,7 +1293,7 @@ class Equipment {
     }
 
     setName(name) {
-       this.name = name;
+        this.name = name;
     }
 }
 
@@ -1051,16 +1302,16 @@ class Composite extends Equipment {
 
     constructor() {
         super();
-        this.equipaments = [];
+        this.equipments = [];
     }
 
-    add(equipament) {
-        this.equipaments.push(equipament);
+    add(equipment) {
+        this.equipments.push(equipment);
     }
 
     getPrice() {
-        return this.equipaments.map(equipament => {
-            return equipament.getPrice();
+        return this.equipments.map(equipment => {
+            return equipment.getPrice();
         }).reduce((a, b)  => {
             return  a + b;
         });

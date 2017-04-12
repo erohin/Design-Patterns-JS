@@ -1,16 +1,16 @@
 // composition
 function EquipmentComposition(name) {
-    this.equipaments = [];
+    this.equipments = [];
     this.name = name;
 }
 
-EquipmentComposition.prototype.add = function(Equipament) {
-    this.equipaments.push(Equipament);
+EquipmentComposition.prototype.add = function(equipment) {
+    this.equipments.push(equipment);
 };
 
 EquipmentComposition.prototype.getPrice = function() {
-    return this.equipaments.map(function(Equipament){
-        return Equipament.getPrice();
+    return this.equipments.map(function(equipment){
+        return equipment.getPrice();
     }).reduce(function(a, b) {
         return  a + b;
     });
